@@ -23,7 +23,9 @@ struct Dashboard: View {
     let addNewVM: () -> Void
     
     @State var selection: Set<VM.ID> = []
+    
     @State var renaming: VM? = nil
+    @State var editing: VM? = nil
     
     /** When set to `.Info`, it will show the info inspector to the right *besides* the VM. */
     @State var view: DashView = .VM
@@ -59,7 +61,6 @@ struct Dashboard: View {
                 self.view = newValue ? .Info : .VM
             }
         )
-        
         
         return NavigationSplitView {
             self.list
@@ -105,6 +106,26 @@ struct Dashboard: View {
             
             toolbar.toolbar
         }
+        .sheet(
+            isPresented: Binding<Bool>(
+                get: {
+                    editing != nil
+                },
+                set: { _ in
+                    editing = nil
+                }
+            )
+        ) {
+            Wizard.EditVM(
+                didCancel: {
+                    editing = nil
+                },
+                didSubmit: { submitted in
+                    edit(vm: editing!, memory: submitted.memory, vCPUs: submitted.vCPUs)
+                },
+                vm: $editing
+            )
+        }
     }
 }
 
@@ -119,6 +140,16 @@ extension Dashboard {
                 self.error(e.localizedDescription)
             }
         }
+    }
+    
+    func edit(vm: VM, memory: Double, vCPUs: Double) -> Void {
+        self.editing = nil
+        
+        vm.memory = memory
+        vm.vCPUs = vCPUs
+        
+        try? vm.configure() // required for changes to take effect
+        vm.backup()
     }
 }
 
