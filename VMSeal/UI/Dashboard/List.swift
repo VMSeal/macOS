@@ -43,6 +43,10 @@ extension Dashboard {
                         renaming = vm.wrappedValue
                     }.disabled(vm.wrappedValue.state != .stopped)
                     
+                    Button("Edit", systemImage: "square.and.pencil") {
+                        editing = vm.wrappedValue
+                    }.disabled(vm.wrappedValue.state != .stopped)
+                    
                     Button("Delete", systemImage: "minus", role: .destructive) {
                         
                         // Maybe the user has selected more than one VM?
