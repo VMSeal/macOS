@@ -66,8 +66,14 @@ struct VMSeal: App {
                                 name: name,
                                 specs: specs
                             )
-                        } catch let e as LocalizedError {
-                            reportError(e.errorDescription)
+                        } catch let e as VM.InstallerDownloadError {
+                            reportError(e.message)
+                        } catch let e as VM.InstallerVerificationError {
+                            reportError(e.message)
+                        } catch let e as VM.InstallerConfigurationError {
+                            reportError(e.message)
+                        } catch VM.InstallerConfigurationCheckError.failed(let reason) {
+                            reportError("Failed pre-install check: \(reason)")
                         } catch let e {
                             reportError(e.localizedDescription)
                         }

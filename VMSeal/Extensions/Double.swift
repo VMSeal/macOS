@@ -73,4 +73,3 @@ extension Double {
         return converted
     }
 }
-

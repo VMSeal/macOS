@@ -152,8 +152,6 @@ class VM: Identifiable {
         // CDROM is inserted by default.
         self.cdrom = VM.CDROM(state: .inserted)
         try self.cdrom.insert(vm: self)
-        
-        self.backup()
     }
     
     func backup() -> Void {
@@ -181,13 +179,12 @@ class VM: Identifiable {
                 try device.configure(configuration: self.configuration)
             }
         } catch {
-            throw UserFacingError(
-                message: "Failed to configure device(s)."
-            )
+            throw VM.ConfigurationError.failedDeviceConfiguration
         }
         
         try self.configuration.validate()
         
+        // TODO: Is this really necessary? Can this be removed?
         self.backup()
     }
     
@@ -200,18 +197,17 @@ class VM: Identifiable {
             self.stateObserver = VM.StateObserver(vm: self.vm!)
             
             try await self.vm!.start()
-        } catch let e {
-            throw UserFacingError(
-                message: "Something went wrong starting the VM!\nDetails: \(e.localizedDescription)",
-                fatal: true
-            )
+        } catch {
+            throw VM.ConfigurationError.failedToStartVM
         }
     }
     
     func stop() {
         self.vm?.stop { error in
+            
+            // Attempt to request stop if force-stopping fails
             guard error != nil else {
-                // TODO: Handle errors!
+                try? self.vm?.requestStop()
                 return
             }
             
@@ -221,11 +217,10 @@ class VM: Identifiable {
     
     func rename(to newName: String) throws {
         if self.state != .stopped {
-            throw VM.RuntimeError("Cannot rename VM which is currently running!")
+            throw VM.RuntimeError.cannotRenameWhenPoweredOn
         }
         
         self.name = newName
-        
         try self.storage.rename(to: newName)
         
         // We need to reconfigure the VM's hard disk and EFI store & more
@@ -237,7 +232,6 @@ class VM: Identifiable {
         )
         
         try self.configure()
-        
         self.backup()
     }
 }
@@ -290,7 +284,7 @@ extension VM {
         func toggle(vm: VM) throws -> Void {
             
             if vm.state != .stopped {
-                throw VM.RuntimeError("To insert/eject a VM, it needs to be powered off completely.")
+                throw VM.RuntimeError.failedToInsertOrEjectCDROM
             }
             
             if self.state == .ejected {
@@ -300,6 +294,43 @@ extension VM {
             }
             
             try vm.configure()
+        }
+    }
+}
+
+// ------
+// Errors
+// ------
+
+extension VM {
+    enum RuntimeError: Error {
+        case failedToInsertOrEjectCDROM
+        case cannotRenameWhenPoweredOn
+        
+        var message: String {
+            switch self {
+            case .failedToInsertOrEjectCDROM:
+                return "Failed to insert or eject a CDROM!"
+            case .cannotRenameWhenPoweredOn:
+                return "Cannot rename a VM which is powered on!"
+            }
+        }
+    }
+    
+    enum ConfigurationError: Error {
+        case failedDeviceConfiguration
+        case failedToStartVM
+        case failedToStopVM
+        
+        var message: String {
+            switch self {
+            case .failedDeviceConfiguration:
+                return "Failed to configure the VM's devices!"
+            case .failedToStartVM:
+                return "Failed to start the VM!"
+            case .failedToStopVM:
+                return "Failed to stop the VM!"
+            }
         }
     }
 }

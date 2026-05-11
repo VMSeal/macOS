@@ -9,7 +9,7 @@
 //  String.swift
 //  VMSeal
 //
-//  Created by Developer on 2026-03-30.
+//  Created by Axel H. Karlsson on 2026-03-30.
 //
 
 import Foundation

@@ -14,14 +14,6 @@
 
 import SwiftUI
 
-struct InstallationError: LocalizedError {
-    var errorDescription: String
-    
-    init(_ errorDescription: String) {
-        self.errorDescription = errorDescription
-    }
-}
-
 extension VM {
     @Observable
     @MainActor
@@ -70,7 +62,7 @@ extension VM {
             }
             
             guard let url = source?.url else {
-                throw InstallationError("Couldn't retrieve URL of source!")
+                throw VM.InstallerDownloadError.cannotRetrieveSourceURL
             }
             
             try await fetch(
@@ -86,7 +78,7 @@ extension VM {
             self.status = .verifying
             
             guard let cdrom = downloaded else {
-                throw InstallationError("Can't verify CDROM before it's downloaded.")
+                throw VM.InstallerVerificationError.cannotVerifyNotDownloadedCDROM
             }
             
             let task = Task {
@@ -96,11 +88,11 @@ extension VM {
             let checksum = try await task.value
             
             guard let expected = source?.checksum else {
-                throw InstallationError("No expected checksum found!")
+                throw InstallerVerificationError.unexpectedInternalChecksum
             }
             
             if !expected.matches(checksum) {
-                throw InstallationError("Failed to verify the integrity of the downloaded ISO!")
+                throw InstallerVerificationError.failedVerificationCheck
             }
         }
         
@@ -123,7 +115,7 @@ extension VM {
             
             guard let disk = vm.devices.first(where: { $0 is Device.Disk }) as? Device.Disk else {
                 cleanup(vm)
-                throw InstallationError("Disk not found inside VM's internal devices!")
+                throw InstallerConfigurationError.diskNotFoundInVMsInternalDevices
             }
             
             let task = Task {
@@ -132,7 +124,7 @@ extension VM {
             
             guard await (try? task.result.get()) != nil else {
                 cleanup(vm)
-                throw InstallationError("Disk creation failed!")
+                throw InstallerConfigurationError.diskCreationFailed
             }
             
             do {
@@ -143,10 +135,11 @@ extension VM {
             
             guard let supervisor = self.supervisor else {
                 cleanup(vm)
-                throw InstallationError("Supervisor needs to be initialised prior to use!")
+                throw InstallerConfigurationError.supervisorUninitialised
             }
             
             supervisor.add(vm)
+            vm.backup()
         }
         
         /**
@@ -161,10 +154,12 @@ extension VM {
                 
                 if !result.passed {
                     guard let reason = result.reason else {
-                        throw InstallationError("Failed to start VM creation!")
+                        throw InstallerConfigurationCheckError.failed(
+                            reason: "Something went wrong!"
+                        )
                     }
                     
-                    throw InstallationError(reason)
+                    throw InstallerConfigurationCheckError.failed(reason: reason)
                 }
             }
             
@@ -194,5 +189,60 @@ extension VM {
                 specs
             )
         }
+    }
+}
+
+// ------
+// Errors
+// ------
+
+extension VM {
+    enum InstallerDownloadError: Error {
+        case cannotRetrieveSourceURL
+        
+        var message: String {
+            switch self {
+            case .cannotRetrieveSourceURL:
+                return "Failed to retrieve the source's URL!"
+            }
+        }
+    }
+    
+    enum InstallerVerificationError: Error {
+        case cannotVerifyNotDownloadedCDROM
+        case unexpectedInternalChecksum
+        case failedVerificationCheck
+        
+        var message: String {
+            switch self {
+            case .cannotVerifyNotDownloadedCDROM:
+                return "Cannot verify a CDROM image which isn't yet downloaded!"
+            case .unexpectedInternalChecksum:
+                return "An internal error occurred trying to get the expected checksum!"
+            case .failedVerificationCheck:
+                return "The verification process failed to verify that the file downloaded isn't corrupt or tampered with!"
+            }
+        }
+    }
+    
+    enum InstallerConfigurationError: Error {
+        case diskNotFoundInVMsInternalDevices
+        case diskCreationFailed
+        case supervisorUninitialised
+        
+        var message: String {
+            switch self {
+            case .diskNotFoundInVMsInternalDevices:
+                return "Disk not found in VM's internal devices!"
+            case .diskCreationFailed:
+                return "Failed to create a new disk for the VM!"
+            case .supervisorUninitialised:
+                return "An internal error occurred trying to use an uninitialised supervisor!"
+            }
+        }
+    }
+    
+    enum InstallerConfigurationCheckError: Error {
+        case failed(reason: String)
     }
 }

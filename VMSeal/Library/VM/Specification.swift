@@ -6,7 +6,7 @@
 //  | see the LICENSE file in the project's source directory. |
 //  +---------------------------------------------------------+
 //
-//  Configuration.swift
+//  Specification.swift
 //  VMSeal
 //
 //  Created by Axel H. Karlsson on 2026-02-15.
@@ -32,7 +32,6 @@ extension VM {
         // Default configuration which should
         // be fine for most.
         static var standard: Specification {
-            
             guard let recommendedCPUs = Double(exactly: VM.Requirements.CPU.recommended) else {
                 fatalError(
                     "Failed to convert CPU count from Int to Double.\n"
