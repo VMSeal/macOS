@@ -39,6 +39,8 @@ extension Dashboard {
         let start: () -> Void
         let stop: () -> Void
         
+        let unselectVMs: () -> Void
+        
         @Binding var disabled: DisabledButton
         
         @Binding var selection: Set<VM.ID>
@@ -67,8 +69,7 @@ extension Dashboard {
             
             ToolbarItemGroup(placement: .navigation) {
                 Button("Home", systemImage: "house") {
-                    selection.removeAll()
-                    return
+                    unselectVMs()
                 }
             }
         }

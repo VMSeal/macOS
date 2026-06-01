@@ -73,19 +73,19 @@ struct VMSeal: App {
                 error: reportError,
                 addVM: modal.newVM.show,
                 renameVM: { newName in
-                    if let vm = supervisor.currentVM {
+                    if let vm = selectedVM {
                         renaming = nil
                         try? supervisor.rename(vm, to: newName)
                     }
                 },
                 startVM: {
-                    try? await supervisor.currentVM?.start()
+                    try? await selectedVM?.start()
                 },
                 stopVM: {
-                    supervisor.currentVM?.stop()
+                    selectedVM?.stop()
                 },
                 editVM: { memory, vCPUs in
-                    if let vm = supervisor.currentVM {
+                    if let vm = selectedVM {
                         supervisor.edit(vm, memory: memory, vCPUs: vCPUs)
                     }
                 },
@@ -93,7 +93,10 @@ struct VMSeal: App {
                     let _ = supervisor.delete(vm)
                 },
                 setCurrentVM: { vm in
-                    supervisor.currentVM = vm
+                    // TODO: remove this callback
+                },
+                unselectVMs: {
+                    selection.removeAll()
                 },
                 selection: $selection,
                 selectedVMs: selectedVMs,
