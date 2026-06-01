@@ -56,7 +56,7 @@ extension Dashboard {
                         
                         // Unselect all VMs, otherwise the dashboard thinks that
                         // the deleted VMs are still selected.
-                        selection = []
+                        unselectVMs()
                     }
                 }
                 .popover(isPresented: isRenamingThisVM) {

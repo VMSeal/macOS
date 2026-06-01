@@ -18,22 +18,24 @@ import SwiftUI
 
 /** Class which manages the existence of the user's VMs. */
 @Observable
+@MainActor
 class Supervisor {
     var vms = [VM]()
-    var currentVM: VM?
     
     func restore() {
-        for name in VM.Storage.all {
-            var vm: VM
-            
-            do {
-                vm = try VM(from: name, devices: nil)
-                try vm.configure()
-            } catch {
-                continue
+        Task {
+            for name in VM.Storage.all {
+                var vm: VM
+                
+                do {
+                    vm = try VM(from: name, devices: nil)
+                    try vm.configure()
+                } catch {
+                    continue
+                }
+                
+                vms.append(vm)
             }
-            
-            vms.append(vm)
         }
     }
     

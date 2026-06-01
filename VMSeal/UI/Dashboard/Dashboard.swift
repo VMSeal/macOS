@@ -30,7 +30,10 @@ struct Dashboard: View {
     let stopVM: () -> Void
     let editVM: (Double, Double) -> Void
     let deleteVM: (VM) -> Void
+    
+    // TODO: remove unnecessary `setCurrentVM` callback
     let setCurrentVM: (VM) -> Void
+    let unselectVMs: () -> Void
     
     @Binding var selection: Set<VM.ID>
     
@@ -40,6 +43,7 @@ struct Dashboard: View {
     @Binding var renaming: VM?
     @Binding var editing: VM?
     
+    // TODO: remove redundant `noVMs` variable
     let noVMs: Bool
     @Binding var vms: [VM]
     
@@ -53,10 +57,6 @@ struct Dashboard: View {
     )
     
     var body: some View {
-        if let vm = selectedVM {
-            setCurrentVM(vm)
-        }
-
         // TODO: Move this logic which doesn't belong here
         toolbarButtonState.start = selectedVM == nil ? .disabled : .enabled
         toolbarButtonState.stop = selectedVM == nil ? .disabled : .enabled
@@ -94,9 +94,10 @@ struct Dashboard: View {
                     }
                 },
                 stop: stopVM,
-                disabled: self.$toolbarButtonState,
-                selection: self.$selection,
-                view: self.$view
+                unselectVMs: unselectVMs,
+                disabled: $toolbarButtonState,
+                selection: $selection,
+                view: $view
             )
             
             toolbar.toolbar

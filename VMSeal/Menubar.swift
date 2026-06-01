@@ -25,9 +25,9 @@ extension VMSeal {
         
         CommandMenu("VM") {
             let toggled = Binding<Bool>(
-                get: { supervisor.currentVM?.cdrom.state == .inserted },
+                get: { selectedVM?.cdrom.state == .inserted },
                 set: { _ in
-                    guard let vm = supervisor.currentVM else {
+                    guard let vm = selectedVM else {
                         return
                     }
                     
@@ -43,7 +43,7 @@ extension VMSeal {
             
             Toggle("Insert CDROM", isOn: toggled)
                 .disabled(
-                    supervisor.currentVM == nil || supervisor.currentVM?.state != .stopped
+                    selectedVM == nil || selectedVM?.state != .stopped
                 )
         }
     }
