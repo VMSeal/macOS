@@ -18,8 +18,8 @@ import Virtualization
 extension VMSeal {
     @CommandsBuilder var menubar: some Commands {
         CommandGroup(before: .newItem) {
-            Button("New VM...", action: modal.NewVM.show)
-                .disabled(modal.NewVM.displayed)
+            Button("New VM...", action: modal.newVM.show)
+                .disabled(modal.newVM.displayed)
                 .keyboardShortcut("N", modifiers: [.command, .shift])
         }
         

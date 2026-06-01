@@ -18,7 +18,7 @@ import Virtualization
 
 extension Dashboard {
     var list: some View {
-        List($supervisor.vms, id: \.id, selection: $selection) { vm in
+        List($vms, id: \.id, selection: $selection) { vm in
             
             // We recreate a binding inside here because we need
             // to do an equality test.
@@ -50,8 +50,8 @@ extension Dashboard {
                     Button("Delete", systemImage: "minus", role: .destructive) {
                         
                         // Maybe the user has selected more than one VM?
-                        for selectedVM in self.selectedVMs {
-                            let _ = supervisor.delete(selectedVM)
+                        for selectedVM in selectedVMs {
+                            let _ = deleteVM(selectedVM)
                         }
                         
                         // Unselect all VMs, otherwise the dashboard thinks that
@@ -61,12 +61,16 @@ extension Dashboard {
                 }
                 .popover(isPresented: isRenamingThisVM) {
                     RenamePopover { newName in
-                        rename(vm: renaming!, name: newName)
+                        guard let name = newName else {
+                            return
+                        }
+                        
+                        renameVM(name)
                     }
                 }
         }
         .contextMenu {
-            Button("New...", systemImage: "plus", action: addNewVM)
+            Button("New...", systemImage: "plus", action: addVM)
         }
     }
 }

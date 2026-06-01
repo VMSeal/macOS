@@ -17,15 +17,31 @@ import SwiftUI
 import Virtualization
 
 struct Dashboard: View {
-    @Binding var supervisor: Supervisor
+    enum DashView {
+        case VM
+        case Info
+    }
     
     let error: @Sendable (String?) -> Void
-    let addNewVM: () -> Void
     
-    @State var selection: Set<VM.ID> = []
+    let addVM: () -> Void
+    let renameVM: (String) -> Void
+    let startVM: () async throws -> Void
+    let stopVM: () -> Void
+    let editVM: (Double, Double) -> Void
+    let deleteVM: (VM) -> Void
+    let setCurrentVM: (VM) -> Void
     
-    @State var renaming: VM? = nil
-    @State var editing: VM? = nil
+    @Binding var selection: Set<VM.ID>
+    
+    let selectedVMs: [VM]
+    let selectedVM: VM?
+    
+    @Binding var renaming: VM?
+    @Binding var editing: VM?
+    
+    let noVMs: Bool
+    @Binding var vms: [VM]
     
     /** When set to `.Info`, it will show the info inspector to the right *besides* the VM. */
     @State var view: DashView = .VM
@@ -36,38 +52,31 @@ struct Dashboard: View {
         info: .disabled
     )
     
-    var selectedVMs: [VM] {
-        return supervisor.vms.filter { box in
-            selection.contains(box.id)
-        }
-    }
-    
-    var selectedVM: VM? {
-        return selectedVMs.count == 1 ? selectedVMs.first : nil
-    }
-    
     var body: some View {
+        if let vm = selectedVM {
+            setCurrentVM(vm)
+        }
+
+        // TODO: Move this logic which doesn't belong here
         toolbarButtonState.start = selectedVM == nil ? .disabled : .enabled
         toolbarButtonState.stop = selectedVM == nil ? .disabled : .enabled
         toolbarButtonState.info = selectedVM == nil ? .disabled : .enabled
         
-        supervisor.currentVM = selectedVM
-        
         let viewingInfo = Binding<Bool>(
             get: {
-                self.view == .Info
+                view == .Info
             },
             set: { newValue in
-                self.view = newValue ? .Info : .VM
+                view = newValue ? .Info : .VM
             }
         )
         
         return NavigationSplitView {
-            self.list
+            list
         } detail: {
-            self.detail
+            detail
                 .inspector(isPresented: viewingInfo) {
-                    self.info
+                    info
                 }
         }
         .navigationSplitViewColumnWidth(120)
@@ -76,29 +85,15 @@ struct Dashboard: View {
         .toolbar {
             let toolbar = Dashboard.Toolbar(
                 start: {
-                    do {
-                        guard let vm = selectedVM else {
-                            throw NSError()
+                    Task {
+                        do {
+                            try await startVM()
+                        } catch {
+                            self.error("Failed to start the selected VM!")
                         }
-                        
-                        Task {
-                            try await vm.start()
-                        }
-                    } catch {
-                        self.error("Failed to start the selected VM!")
                     }
                 },
-                stop: {
-                    do {
-                        guard let vm = selectedVM else {
-                            throw NSError()
-                        }
-                        
-                        vm.stop()
-                    } catch {
-                        self.error("Failed to stop the selected VM!")
-                    }
-                },
+                stop: stopVM,
                 disabled: self.$toolbarButtonState,
                 selection: self.$selection,
                 view: self.$view
@@ -106,56 +101,5 @@ struct Dashboard: View {
             
             toolbar.toolbar
         }
-        .sheet(
-            isPresented: Binding<Bool>(
-                get: {
-                    editing != nil
-                },
-                set: { _ in
-                    editing = nil
-                }
-            )
-        ) {
-            Wizard.EditVM(
-                didCancel: {
-                    editing = nil
-                },
-                didSubmit: { submitted in
-                    edit(vm: editing!, memory: submitted.memory, vCPUs: submitted.vCPUs)
-                },
-                vm: $editing
-            )
-        }
-    }
-}
-
-extension Dashboard {
-    func rename(vm: VM, name: String?) -> Void {
-        self.renaming = nil // Don't show any dialogue or similar
-        
-        if name != nil {
-            do {
-                try vm.rename(to: name!)
-            } catch let e {
-                self.error(e.localizedDescription)
-            }
-        }
-    }
-    
-    func edit(vm: VM, memory: Double, vCPUs: Double) -> Void {
-        self.editing = nil
-        
-        vm.memory = memory
-        vm.vCPUs = vCPUs
-        
-        try? vm.configure() // required for changes to take effect
-        vm.backup()
-    }
-}
-
-extension Dashboard {
-    enum DashView {
-        case VM
-        case Info
     }
 }

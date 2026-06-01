@@ -51,4 +51,18 @@ class Supervisor {
         
         return true
     }
+    
+    func edit(_ vm: VM, memory: Double, vCPUs: Double) -> Void {
+        vm.memory = memory
+        vm.vCPUs = vCPUs
+        
+        try? vm.configure() // required for changes to take effect
+        vm.backup()
+    }
+    
+    func rename(_ vm: VM, to name: String?) throws -> Void {        
+        if let tmp = name {
+            try vm.rename(to: tmp)
+        }
+    }
 }
