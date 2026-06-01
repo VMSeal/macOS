@@ -52,12 +52,12 @@ extension Source {
                 Source(
                     name: "Fedora",
                     urls: [
-                        .Intel: constructURL(from: "https://download.fedoraproject.org/pub/fedora/linux/releases/43/Workstation/x86_64/iso/Fedora-Workstation-Live-43-1.6.x86_64.iso"),
-                        .Silicon: constructURL(from: "https://download.fedoraproject.org/pub/fedora/linux/releases/43/Workstation/aarch64/iso/Fedora-Workstation-Live-43-1.6.aarch64.iso")
+                        .Intel: constructURL(from: "https://download.fedoraproject.org/pub/fedora/linux/releases/44/Workstation/x86_64/iso/Fedora-Workstation-Live-44-1.7.x86_64.iso"),
+                        .Silicon: constructURL(from: "https://download.fedoraproject.org/pub/fedora/linux/releases/44/Workstation/aarch64/iso/Fedora-Workstation-Live-44-1.7.aarch64.iso")
                     ],
                     checksums: [
-                        .Intel: SHA256Sum("2a4a16c009244eb5ab2198700eb04103793b62407e8596f30a3e0cc8ac294d77"),
-                        .Silicon: SHA256Sum("73e91eb64022b59ed0b19fb706dc2053034dc0abbaec03f59fc7754a29777cfb")
+                        .Intel: SHA256Sum("1620295f6a00c27c3208f0c00b8ece4eab1ec69b9002152d97488bf26a426ddf"),
+                        .Silicon: SHA256Sum("162ba3c552a2d241c7c63ec26777af0255ee1b5a135adc0be986ceed999933ef")
                     ]
                 ),
                 Source(
