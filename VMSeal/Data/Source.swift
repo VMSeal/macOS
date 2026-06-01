@@ -63,12 +63,12 @@ extension Source {
                 Source(
                     name: "Ubuntu",
                     urls: [
-                        .Intel: constructURL(from: "https://releases.ubuntu.com/25.10/ubuntu-25.10-desktop-amd64.iso"),
-                        .Silicon: constructURL(from: "https://cdimage.ubuntu.com/releases/25.10/release/ubuntu-25.10-desktop-arm64.iso")
+                        .Intel: constructURL(from: "https://releases.ubuntu.com/resolute/ubuntu-26.04-desktop-amd64.iso"),
+                        .Silicon: constructURL(from: "https://cdimage.ubuntu.com/releases/26.04/release/ubuntu-26.04-desktop-arm64.iso")
                     ],
                     checksums: [
-                        .Intel: SHA256Sum("32e30d72ae4798c633323a2684d94a11582bb03a6ab38d2b0d5ae5eabc5e577b"),
-                        .Silicon: SHA256Sum("9d383dd57220dec520fdec3be05da258d27d435c02fe6e296c5d0a505741a787")
+                        .Intel: SHA256Sum("487f87faaf547ea30e0aba4d5b53346292571256b25333a978db1692bcee9dd2"),
+                        .Silicon: SHA256Sum("c2afd538d66fdd77377d03f1ed2ac76a34f1c116baecc9a8170d68f833121f57")
                     ]
                 )
             ]
