@@ -48,63 +48,63 @@ private struct Overlay {
         }
     }
 }
+
+private struct Detail {
+    let selectedVM: VM?
+    let selection: Set<VM.ID>
     
-extension Dashboard {
-    struct Detail {
-        let selectedVM: VM?
-        let selection: Set<VM.ID>
-        
-        var unselected: some View {
-            Notice(title: "No VM selected.")
-        }
-        
-        var multipleSelected: some View {
-            Notice(
-                title: "\(selection.count) VMs are selected."
-            )
-        }
-        
-        var empty: some View {
-            Notice(
-                title: "You don't have any VMs, yet...",
-                subtitle: "Create one via 'File > New VM...' in the menubar."
-            )
-        }
-        
-        var vm: some View {
-            HStack {
-                if selectedVM != nil {
-                    ZStack {
-                        VM.UI.Frame(currentVM: selectedVM!)
-                            .id(selectedVM!.id) // setting ID prevents a bug where old artifacts show up on shutdown VMs.
-                        
-                        if selectedVM!.state == .stopped {
-                            Overlay.Stopped()
-                        }
-                        
-                        if selectedVM!.state == .starting {
-                            Overlay.Starting()
-                        }
-                    }
-                } else {
-                    Text("Something went wrong displaying the VM...")
-                }
-            }
-            .navigationTitle(selectedVM?.name ?? "Unnamed VM")
-        }
+    var unselected: some View {
+        Notice(title: "No VM selected.")
     }
     
+    var multipleSelected: some View {
+        Notice(
+            title: "\(selection.count) VMs are selected."
+        )
+    }
+    
+    var empty: some View {
+        Notice(
+            title: "You don't have any VMs, yet...",
+            subtitle: "Create one via 'File > New VM...' in the menubar."
+        )
+    }
+    
+    var vm: some View {
+        HStack {
+            if selectedVM != nil {
+                ZStack {
+                    VM.UI.Frame(currentVM: selectedVM!)
+                        .id(selectedVM!.id) // setting ID prevents a bug where old artifacts show up on shutdown VMs.
+                    
+                    if selectedVM!.state == .stopped {
+                        Overlay.Stopped()
+                    }
+                    
+                    if selectedVM!.state == .starting {
+                        Overlay.Starting()
+                    }
+                }
+            } else {
+                Text("Something went wrong displaying the VM...")
+            }
+        }
+        .navigationTitle(selectedVM?.name ?? "Unnamed VM")
+    }
+}
+    
+extension Dashboard {
     @ViewBuilder var detail: some View {
         let d = Detail(
             selectedVM: self.selectedVM,
             selection: self.selection
         )
         
-        if self.supervisor.vms.isEmpty {
+        if vms.isEmpty {
             d.empty
-        } else if self.selection.isEmpty {
+        } else if selection.isEmpty {
             d.unselected
-        } else if self.selection.count > 1 {
+        } else if selection.count > 1 {
             d.multipleSelected
         } else {
             d.vm
