@@ -14,16 +14,22 @@
 
 import Foundation
 
+
+
 extension String {
-    static func atob(text: String) -> String? {
-        guard let data = Data(base64Encoded: text) else {
-            return nil
+    struct Base64 {
+        let string: String
+        
+        var encoded: String {
+            String(data: Data(base64Encoded: self.string)!, encoding: .utf8)!
         }
         
-        return String(data: data, encoding: .utf8)
+        var decoded: String {
+            Data(self.string.utf8).base64EncodedString()
+        }
     }
     
-    func btoa() -> String {
-        return Data(self.utf8).base64EncodedString()
+    var base64: Base64 {
+        Base64(string: self)
     }
 }

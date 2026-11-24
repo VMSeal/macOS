@@ -16,35 +16,5 @@ import SwiftUI
 import Virtualization
 
 extension VMSeal {
-    @CommandsBuilder var menubar: some Commands {
-        CommandGroup(before: .newItem) {
-            Button("New VM...", action: modal.newVM.show)
-                .disabled(modal.newVM.displayed)
-                .keyboardShortcut("N", modifiers: [.command, .shift])
-        }
-        
-        CommandMenu("VM") {
-            let toggled = Binding<Bool>(
-                get: { selectedVM?.cdrom.state == .inserted },
-                set: { _ in
-                    guard let vm = selectedVM else {
-                        return
-                    }
-                    
-                    do {
-                        try vm.cdrom.toggle(vm: vm)
-                    } catch let e as LocalizedError {
-                        reportError(e.errorDescription)
-                    } catch let e {
-                        reportError(e.localizedDescription)
-                    }
-                }
-            )
-            
-            Toggle("Insert CDROM", isOn: toggled)
-                .disabled(
-                    selectedVM == nil || selectedVM?.state != .stopped
-                )
-        }
-    }
+    
 }
