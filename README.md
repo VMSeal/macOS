@@ -1,9 +1,7 @@
-<p align="center">
-  <img src="https://vmseal.org/assets/branding//Branding.png" alt="VMSeal" height="120" />
-</p>
+# VMSeal
 
----
+VMSeal is a minimal, native and security-focused virtualisation program for macOS.
 
-VMSeal is a FOSS virtualiser for macOS, based on Apple's `Virtualization.Framework`, intended primarily for creating secured and isolated environments.
+Its goal is to be able to run untrusted code by leveraging several layers of security in-between the host operating system.
 
-**NOTE:** The software is currently in alpha. 
+For further information about the program as a whole and its security model, please refer to [our website](https://vmseal.org).
