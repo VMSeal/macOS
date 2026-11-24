@@ -41,14 +41,6 @@ extension Double {
         self * Double(Unit.GiB)
     }
 
-    
-    
-    // --- Methods for safer casting ---
-    
-    
-    // [Side Note]: Not sure how to DRY this section up,
-    // either way, it is needed...
-    
     var asInt: Int {
         guard let converted = Int(exactly: self.rounded()) else {
             return Int(0)

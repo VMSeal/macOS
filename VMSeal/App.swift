@@ -19,148 +19,64 @@ import Virtualization
 import AppKit
 
 @Observable
-@MainActor
-class ModalManager {
-    var newVM: Modal
-    var editVM: Modal
+class SharedAppState {
+    static let shared = SharedAppState()
     
-    init(newVM: Modal, editVM: Modal) {
-        self.newVM = newVM
-        self.editVM = editVM
+    var presentedSheet: Sheet?
+    
+    init() {
+        self.presentedSheet = nil
     }
 }
 
 @main
 struct VMSeal: App {
-    @State var supervisor: Supervisor = Supervisor()
-    @State private var installer: VM.Installer = VM.Installer()
+    enum WindowId: String {
+        case mainWindow
+    }
     
-    @State private var hadError: Bool = false
-    @State private var errorMessage: String = ""
+    static func quit() {
+        NSApplication.shared.terminate(self)
+    }
     
-    @State var modal = ModalManager(
-        newVM: Modal(),
-        editVM: Modal()
-    )
+    @State private var errorMessage: String? = nil
     
-    @State var selection: Set<VM.ID> = []
+    @State private var supervisor = Supervisor()
     
-    @State var editing: VM? = nil
-    @State var renaming: VM? = nil
+    func reportError(_ message: String?) -> Void {
+        self.errorMessage = message ?? "Something went wrong!"
+    }
     
-    var selectedVMs: [VM] {
-        return supervisor.vms.filter { box in
-            selection.contains(box.id)
+    @CommandsBuilder var menubar: some Commands {
+        CommandGroup(before: .newItem) {
+            Button("New VM...", action: { SharedAppState.shared.presentedSheet = .newVM })
+                .keyboardShortcut("N", modifiers: [.command, .shift])
         }
     }
     
-    var selectedVM: VM? {
-        return selectedVMs.count == 1 ? selectedVMs.first : nil
-    }
-    
     init() {
-        // Restores saved VMs from disk
-        supervisor.restore()
-        
-        // We have to set this property in the initialiser,
-        // otherwise Swift gets angry.
-        installer.supervisor = supervisor
+        NSWindow.allowsAutomaticWindowTabbing = false
     }
     
     var body: some Scene {
-        WindowGroup {
-            Dashboard(
-                error: reportError,
-                addVM: modal.newVM.show,
-                renameVM: { newName in
-                    if let vm = selectedVM {
-                        renaming = nil
-                        try? supervisor.rename(vm, to: newName)
-                    }
-                },
-                startVM: {
-                    try? await selectedVM?.start()
-                },
-                stopVM: {
-                    selectedVM?.stop()
-                },
-                editVM: { memory, vCPUs in
-                    if let vm = selectedVM {
-                        supervisor.edit(vm, memory: memory, vCPUs: vCPUs)
-                    }
-                },
-                deleteVM: { vm in
-                    let _ = supervisor.delete(vm)
-                },
-                setCurrentVM: { vm in
-                    // TODO: remove this callback
-                },
-                unselectVMs: {
-                    selection.removeAll()
-                },
-                selection: $selection,
-                selectedVMs: selectedVMs,
-                selectedVM: selectedVM,
-                renaming: $renaming,
-                editing: $editing,
-                noVMs: supervisor.vms.isEmpty,
-                vms: $supervisor.vms
-            )
-            .sheet(isPresented: $modal.newVM.displayed) {
-                Wizard.NewVM(didCancel: modal.newVM.hide) { name, description, specs in
-                    modal.newVM.hide()
+        Window("VMSeal", id: WindowId.mainWindow.rawValue) {
+            ContentView()
+                .onAppear {
                     Task {
-                        do {
-                            try await installer.install(
-                                name: name,
-                                specs: specs
-                            )
-                        } catch let e as VM.InstallerDownloadError {
-                            reportError(e.message)
-                        } catch let e as VM.InstallerVerificationError {
-                            reportError(e.message)
-                        } catch let e as VM.InstallerConfigurationError {
-                            reportError(e.message)
-                        } catch VM.InstallerConfigurationCheckError.failed(let reason) {
-                            reportError("Failed pre-install check: \(reason)")
-                        } catch let e {
-                            reportError(e.localizedDescription)
-                        }
+                        try? await self.supervisor.restoreAll()
                     }
                 }
-            }
-            .sheet(isPresented: $installer.active) {
-                InstallProgress(
-                    progress: $installer.progress,
-                    status: $installer.status
+                .environment(
+                    ContentView.ViewModel(
+                        supervisor: self.supervisor,
+                        reportError: self.reportError
+                    )
                 )
-            }
-            .sheet(
-                isPresented: Binding<Bool>(
-                    get: {
-                        editing != nil
-                    },
-                    set: { _ in
-                        editing = nil
+                .alert(self.errorMessage ?? "", isPresented: .constant(self.errorMessage != nil)) {
+                    Button("OK") {
+                        self.errorMessage = nil
                     }
-                )
-            ) {
-                Wizard.EditVM(
-                    didCancel: {
-                        editing = nil
-                    },
-                    didSubmit: { submitted in
-                        supervisor.edit(editing!, memory: submitted.memory, vCPUs: submitted.vCPUs)
-                        editing = nil
-                    },
-                    vm: $editing
-                )
-            }
-            .alert(errorMessage, isPresented: $hadError) {
-                Button("OK") {
-                    hadError = false
                 }
-            }
         }
         .commands {
             menubar
@@ -169,14 +85,5 @@ struct VMSeal: App {
         Settings {
             settings
         }
-    }
-    
-    static func quit() -> Void {
-        NSApplication.shared.terminate(self)
-    }
-    
-    func reportError(_ message: String?) -> Void {
-        self.errorMessage = message ?? "Something went wrong!"
-        self.hadError = true
     }
 }
