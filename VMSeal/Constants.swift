@@ -32,7 +32,7 @@ struct ActionState {
 enum Constant {
     static var source: Installer.Source = Installer.Source(
         iso: URL(string: "https://images.vmseal.org/vmseal.iso")!,
-        checksum: SHA256Sum("6bba1472403499fc96a080e1acac9bff2510a4f1e3a85136444bf5691496e44f"),
+        checksum: SHA256Sum("e445ceec9cd8bcd5b85f61b6b9acba8c35ec1975322fef92dee4378f4200340c"),
         filename: "vmseal.iso"
     )
 }
